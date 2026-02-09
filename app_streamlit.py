@@ -711,39 +711,48 @@ else:
             with c_save:
                 if st.button("💾 SALVAR ALTERAÇÕES", type="primary", use_container_width=True):
                     # Recalcular Saldos Automaticamente (Cascata)
-                    try:
-                        df_final = pd.DataFrame()
-                        states = df_editado['Estado'].unique()
-                        
-                        for state in states:
-                            # Isolar e garantir ordem (embora a ordem visual seja a que importa)
-                            # Assumimos que o usuario insere na ordem cronologica na tabela
-                            state_df = df_editado[df_editado['Estado'] == state].copy().reset_index(drop=True)
+                    with st.spinner("Processando e salvando no Google Sheets..."):
+                        try:
+                            df_final = pd.DataFrame()
+                            states = df_editado['Estado'].unique()
                             
-                            if not state_df.empty:
-                                # Pega o saldo inicial da primeira linha (base manual)
-                                current_balance = state_df.at[0, 'Saldo_Inicial']
+                            for state in states:
+                                # Isolar e garantir ordem (embora a ordem visual seja a que importa)
+                                # Assumimos que o usuario insere na ordem cronologica na tabela
+                                state_df = df_editado[df_editado['Estado'] == state].copy().reset_index(drop=True)
                                 
-                                for i in range(len(state_df)):
-                                    # Define o saldo inicial da linha atual com o acumulado
-                                    state_df.at[i, 'Saldo_Inicial'] = current_balance
+                                if not state_df.empty:
+                                    # Pega o saldo inicial da primeira linha (base manual)
+                                    current_balance = state_df.at[0, 'Saldo_Inicial']
                                     
-                                    # Calcula o saldo final para ser o inicial da proxima
-                                    entrada = state_df.at[i, 'Entrada'] if pd.notna(state_df.at[i, 'Entrada']) else 0
-                                    saida = state_df.at[i, 'Saida'] if pd.notna(state_df.at[i, 'Saida']) else 0
-                                    current_balance = current_balance + entrada - saida
-                                    
-                            df_final = pd.concat([df_final, state_df])
-                        
-                        # Salvar o dataframe recalculado no Google Sheets
-                        conn.update(spreadsheet=GSHEET_URL, data=df_final)
+                                    for i in range(len(state_df)):
+                                        # Define o saldo inicial da linha atual com o acumulado
+                                        state_df.at[i, 'Saldo_Inicial'] = current_balance
+                                        
+                                        # Calcula o saldo final para ser o inicial da proxima
+                                        entrada = state_df.at[i, 'Entrada'] if pd.notna(state_df.at[i, 'Entrada']) else 0
+                                        saida = state_df.at[i, 'Saida'] if pd.notna(state_df.at[i, 'Saida']) else 0
+                                        current_balance = current_balance + entrada - saida
+                                        
+                                df_final = pd.concat([df_final, state_df])
                             
-                        st.success("✅ DADOS SALVOS COM SUCESSO! Saldos iniciais recalculados automaticamente.")
-                        st.balloons()
-                        st.rerun()
+                            # Garantir que as colunas estejam na ordem correta
+                            df_final = df_final[['Mes_Ref', 'Estado', 'Entrada', 'Saida', 'Saldo_Inicial']]
+                            
+                            # Salvar o dataframe recalculado no Google Sheets
+                            conn.update(
+                                spreadsheet=GSHEET_URL, 
+                                data=df_final,
+                                worksheet="Sheet1"  # Nome da aba (ajuste se necessário)
+                            )
+                                
+                            st.success("✅ DADOS SALVOS COM SUCESSO NO GOOGLE SHEETS! Saldos recalculados automaticamente.")
+                            st.balloons()
+                            st.rerun()
 
-                    except Exception as e:
-                        st.error(f"Erro ao salvar: {e}")
+                        except Exception as e:
+                            st.error(f"❌ Erro ao salvar no Google Sheets: {e}")
+                            st.warning("💡 Verifique se a planilha foi compartilhada com permissão de EDITOR.")
             
             with c_dl:
                 # Download Backup

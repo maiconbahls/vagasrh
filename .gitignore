@@ -1,0 +1,25 @@
+# Arquivos sensíveis
+.streamlit/secrets.toml
+*.pyc
+__pycache__/
+.env
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Dados locais (não necessários com Google Sheets)
+*.xlsx
+*.xls
+*.csv
+
+# Python
+*.egg-info/
+dist/
+build/

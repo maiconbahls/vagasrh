@@ -4,7 +4,6 @@ import plotly.graph_objects as go
 import io
 import os
 from datetime import datetime
-from streamlit_gsheets import GSheetsConnection
 
 # URL de Exportação CSV (ajustada para o novo formato)
 GSHEET_URL = "https://docs.google.com/spreadsheets/d/1Vmg9SJzq_Hq9u5CpeLgt4X5qJPVai9LGH6ajpsR7m_I/export?format=csv"
